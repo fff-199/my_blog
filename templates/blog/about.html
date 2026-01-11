@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}关于 - 我的博客{% endblock %}
+{% block description %}关于我和这个博客{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="about-section">
+        <div class="about-header">
+            <div class="about-avatar">🌿</div>
+            <h1 class="about-title">关于我</h1>
+            <p class="about-subtitle">一个热爱技术与生活的博主</p>
+        </div>
+
+        <div class="about-content">
+            <div class="about-card">
+                <h2>👋 人间俯仰今古</h2>
+                <p>欢迎来到我的博客！</p>
+                <p>关于科学，游戏，AI 等等。</p>
+                <p>希望我的文章能给你带来一些帮助或启发。</p>
+            </div>
+
+            <div class="about-card">
+                <h2>📊 博客统计</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-icon">📝</span>
+                        <span class="stat-value">{{ stats.post_count }}</span>
+                        <span class="stat-label">篇文章</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">📂</span>
+                        <span class="stat-value">{{ stats.category_count }}</span>
+                        <span class="stat-label">个分类</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">🏷️</span>
+                        <span class="stat-value">{{ stats.tag_count }}</span>
+                        <span class="stat-label">个标签</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">💬</span>
+                        <span class="stat-value">{{ stats.comment_count }}</span>
+                        <span class="stat-label">条评论</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="about-card">
+                <h2>🛠️ 技术栈</h2>
+                <div class="tech-tags">
+                    <span class="tech-tag">Python</span>
+                    <span class="tech-tag">Django</span>
+                    <span class="tech-tag">HTML5</span>
+                    <span class="tech-tag">CSS3</span>
+                    <span class="tech-tag">JavaScript</span>
+                    <span class="tech-tag">SQLite</span>
+                </div>
+            </div>
+
+            <div class="about-card">
+                <h2>📬 联系我</h2>
+                <p>如果你有任何问题或建议，欢迎在文章下方留言，或通过以下方式联系我：</p>
+                <ul class="contact-list">
+                    <li>📧 Email: <a href="mailto:a15626213440@gmail.com">a15626213440@gmail.com</a></li>
+                    <li>🐙 GitHub: <a href="https://github.com/fff-199" target="_blank" rel="noopener noreferrer">https://github.com/fff-199</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    {% include 'blog/sidebar.html' %}
+</div>
+{% endblock %}

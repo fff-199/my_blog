@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}归档 - 我的博客{% endblock %}
+{% block description %}按时间归档浏览文章{% endblock %}
+
+{% block content %}
+<div class="page-header archive-header">
+    <div class="page-header-content">
+        <span class="page-header-icon">📅</span>
+        <h1 class="page-header-title">文章归档</h1>
+        <p class="page-header-desc">按时间浏览所有文章</p>
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <section class="archive-section">
+        {% if archive_dates %}
+        <div class="archive-list">
+            {% for item in archive_dates %}
+            <a href="{% url 'blog:archive_month' item.month.year item.month.month %}" class="archive-item">
+                <div class="archive-date">
+                    <span class="archive-year">{{ item.month|date:"Y" }}</span>
+                    <span class="archive-month">{{ item.month|date:"m" }}月</span>
+                </div>
+                <div class="archive-count">
+                    {{ item.count }} 篇文章
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p class="empty-icon">📅</p>
+            <p class="empty-text">暂无归档</p>
+        </div>
+        {% endif %}
+    </section>
+
+    {% include 'blog/sidebar.html' %}
+</div>
+{% endblock %}

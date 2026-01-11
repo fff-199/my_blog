@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}我的博客{% endblock %}</title>
+    <meta name="description" content="{% block description %}一个记录生活与技术的个人博客{% endblock %}">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="{% url 'blog:post_list' %}" class="logo">
+                <span class="logo-icon">🌿</span>
+                我的博客
+            </a>
+            <ul class="nav-links">
+                <li><a href="{% url 'blog:post_list' %}"
+                        class="nav-link {% if request.resolver_match.url_name == 'post_list' and not category and not tag %}active{% endif %}">首页</a>
+                </li>
+                {% for cat in categories|slice:":4" %}
+                <li><a href="{% url 'blog:category_posts' cat.slug %}"
+                        class="nav-link {% if category.slug == cat.slug %}active{% endif %}">{{ cat.name }}</a></li>
+                {% endfor %}
+                <li><a href="{% url 'blog:about' %}"
+                        class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">关于</a>
+                </li>
+                <li><a href="/admin/" class="nav-link nav-admin">管理</a></li>
+            </ul>
+            <button class="mobile-menu-btn" aria-label="打开菜单" aria-controls="mobileMenu" aria-expanded="false"
+                onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 移动端菜单 -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="{% url 'blog:post_list' %}">首页</a>
+        {% for cat in categories %}
+        <a href="{% url 'blog:category_posts' cat.slug %}">{{ cat.name }}</a>
+        {% endfor %}
+        <a href="{% url 'blog:about' %}">关于</a>
+        <a href="/admin/">管理</a>
+    </div>
+
+    <!-- 消息提示 -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}">
+            {{ message }}
+            <button class="message-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="footer-logo">🌿 我的博客</span>
+                    <p class="footer-desc">用心记录，分享美好</p>
+                </div>
+                <div class="footer-links">
+                    <a href="{% url 'blog:post_list' %}">首页</a>
+                    <a href="{% url 'blog:about' %}">关于</a>
+                    <a href="/admin/">管理</a>
+                </div>
+                <div class="footer-contact">
+                    <a href="mailto:a15626213440@gmail.com">📧 a15626213440@gmail.com</a>
+                    <a href="https://github.com/fff-199" target="_blank">🐙 GitHub</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 我的博客 · 用 ❤️ 和 Django 构建</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const btn = document.querySelector('.mobile-menu-btn');
+            menu.classList.toggle('active');
+            if (btn) {
+                const expanded = menu.classList.contains('active');
+                btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            }
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}搜索结果 - 我的博客{% endblock %}
+{% block description %}搜索文章{% endblock %}
+
+{% block content %}
+<div class="page-header search-header">
+    <div class="page-header-content">
+        <span class="page-header-icon">🔍</span>
+        <h1 class="page-header-title">搜索结果</h1>
+        {% if query %}
+        <p class="page-header-desc">关键词：「{{ query }}」</p>
+        <p class="page-header-count">找到 {{ result_count }} 篇相关文章</p>
+        {% else %}
+        <p class="page-header-desc">请输入搜索关键词</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <section class="posts-section">
+        <!-- 搜索表单 -->
+        <form action="{% url 'blog:search' %}" method="get" class="search-form-large">
+            <input type="text" name="q" value="{{ query }}" placeholder="搜索文章..." class="search-input-large">
+            <button type="submit" class="btn btn-primary">搜索</button>
+        </form>
+
+        {% if posts %}
+        <div class="posts-grid" style="margin-top: 32px;">
+            {% for post in posts %}
+            <article class="post-card">
+                {% if post.cover_image %}
+                <div class="post-card-image">
+                    <img src="{{ post.cover_image.url }}" alt="{{ post.title }}">
+                </div>
+                {% endif %}
+                <div class="post-card-header">
+                    {% if post.category %}
+                    <a href="{% url 'blog:category_posts' post.category.slug %}" class="post-category">
+                        {{ post.category.name }}
+                    </a>
+                    {% endif %}
+                    <span class="post-views">👁 {{ post.views }}</span>
+                </div>
+                <div class="post-card-content">
+                    <h3 class="post-title">
+                        <a href="{% url 'blog:post_detail' post.slug %}">{{ post.title }}</a>
+                    </h3>
+                    <p class="post-excerpt">{{ post.excerpt|truncatechars:120 }}</p>
+                </div>
+                <div class="post-card-footer">
+                    <div class="post-meta">
+                        <span class="post-date">📅 {{ post.created_at|date:"Y/m/d" }}</span>
+                    </div>
+                    <a href="{% url 'blog:post_detail' post.slug %}" class="read-more">阅读 →</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        {% if posts.has_other_pages %}
+        <nav class="pagination">
+            {% if posts.has_previous %}
+            <a href="?q={{ query }}&page={{ posts.previous_page_number }}" class="page-link">← 上一页</a>
+            {% endif %}
+            <div class="page-numbers">
+                {% for num in posts.paginator.page_range %}
+                {% if posts.number == num %}
+                <span class="page-link current">{{ num }}</span>
+                {% elif num > posts.number|add:'-3' and num < posts.number|add:'3' %} <a
+                    href="?q={{ query }}&page={{ num }}" class="page-link">{{ num }}</a>
+                    {% endif %}
+                    {% endfor %}
+            </div>
+            {% if posts.has_next %}
+            <a href="?q={{ query }}&page={{ posts.next_page_number }}" class="page-link">下一页 →</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {% elif query %}
+        <div class="empty-state" style="margin-top: 32px;">
+            <p class="empty-icon">🔍</p>
+            <p class="empty-text">未找到相关文章</p>
+            <p class="empty-hint">试试其他关键词吧</p>
+        </div>
+        {% endif %}
+    </section>
+
+    {% include 'blog/sidebar.html' %}
+</div>
+{% endblock %}

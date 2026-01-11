@@ -1,0 +1,74 @@
+<!-- 侧边栏组件 -->
+<aside class="sidebar">
+    <!-- 搜索框 -->
+    <div class="sidebar-widget search-widget">
+        <h3 class="widget-title">🔍 搜索</h3>
+        <form class="search-box" method="get" action="{% url 'blog:search' %}">
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="搜索文章..." class="search-input">
+            <button type="submit" class="search-btn">搜索</button>
+        </form>
+    </div>
+
+    <!-- 分类列表 -->
+    <div class="sidebar-widget categories-widget">
+        <h3 class="widget-title">📂 分类</h3>
+        <ul class="category-list">
+            {% for cat in categories %}
+            <li>
+                <a href="{% url 'blog:category_posts' cat.slug %}"
+                    class="category-link {% if category.slug == cat.slug %}active{% endif %}">
+                    <span class="category-name">{{ cat.name }}</span>
+                    <span class="category-count">{{ cat.post_count }}</span>
+                </a>
+            </li>
+            {% empty %}
+            <li class="empty-hint">暂无分类</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- 标签云 -->
+    <div class="sidebar-widget tags-widget">
+        <h3 class="widget-title">🏷️ 标签</h3>
+        <div class="tag-cloud">
+            {% for t in tags %}
+            <a href="{% url 'blog:tag_posts' t.slug %}" class="tag-item {% if tag.slug == t.slug %}active{% endif %}">
+                {{ t.name }}
+            </a>
+            {% empty %}
+            <span class="empty-hint">暂无标签</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 归档 -->
+    <div class="sidebar-widget archive-widget">
+        <h3 class="widget-title">📅 归档</h3>
+        <a href="{% url 'blog:archives' %}" class="archive-link">查看全部归档 →</a>
+    </div>
+
+    <!-- 最新文章 -->
+    <div class="sidebar-widget recent-widget">
+        <h3 class="widget-title">📰 最新文章</h3>
+        <ul class="recent-posts">
+            {% for p in recent_posts %}
+            <li>
+                <a href="{% url 'blog:post_detail' p.slug %}" class="recent-post-link">
+                    <span class="recent-post-title">{{ p.title|truncatechars:25 }}</span>
+                    <span class="recent-post-date">{{ p.created_at|date:"m/d" }}</span>
+                </a>
+            </li>
+            {% empty %}
+            <li class="empty-hint">暂无文章</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- RSS 订阅 -->
+    <div class="sidebar-widget rss-widget">
+        <h3 class="widget-title">📰 订阅</h3>
+        <a href="{% url 'blog:feed' %}" class="rss-link" target="_blank">
+            🔔 RSS 订阅
+        </a>
+    </div>
+</aside>
