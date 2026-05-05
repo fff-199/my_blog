@@ -64,10 +64,11 @@ class PostAdmin(admin.ModelAdmin):
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     """评论管理"""
-    list_display = ['author_name', 'post', 'created_at', 'is_approved']
-    list_filter = ['is_approved', 'created_at']
-    search_fields = ['author_name', 'author_email', 'content']
+    list_display = ['author_name', 'author_email', 'post', 'parent', 'created_at', 'is_approved']
+    list_filter = ['is_approved', 'created_at', 'post']
+    search_fields = ['author_name', 'author_email', 'content', 'post__title']
     ordering = ['-created_at']
+    date_hierarchy = 'created_at'
     
     # 批量操作
     actions = ['approve_comments', 'reject_comments']

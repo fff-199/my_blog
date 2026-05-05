@@ -1,0 +1,30 @@
+<div class="comment-item" data-comment-id="{{ comment.id }}">
+    <div class="comment-avatar">{{ comment.author_name|slice:":1" }}</div>
+    <div class="comment-content">
+        <div class="comment-header">
+            <span class="comment-author">{{ comment.author_name }}</span>
+            <span class="comment-date">{{ comment.created_at|date:"Y/m/d H:i" }}</span>
+            {% if pending %}
+            <span class="comment-pending">待审核</span>
+            {% endif %}
+        </div>
+        <p class="comment-text">{{ comment.content }}</p>
+        <button class="comment-reply-btn" data-reply-to="{{ comment.author_name }}" data-comment-id="{{ comment.id }}">回复</button>
+        <div class="comment-replies">
+            {% for r in comment.replies.all %}
+            {% if r.is_approved %}
+            <div class="comment-item" data-comment-id="{{ r.id }}">
+                <div class="comment-avatar">{{ r.author_name|slice:":1" }}</div>
+                <div class="comment-content">
+                    <div class="comment-header">
+                        <span class="comment-author">{{ r.author_name }}</span>
+                        <span class="comment-date">{{ r.created_at|date:"Y/m/d H:i" }}</span>
+                    </div>
+                    <p class="comment-text">{{ r.content }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>

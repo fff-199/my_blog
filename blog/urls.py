@@ -35,4 +35,5 @@ urlpatterns = [
     
     # 添加评论
     path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
+    path('post/<int:post_id>/comment/ajax/', views.add_comment_ajax, name='add_comment_ajax'),
 ]

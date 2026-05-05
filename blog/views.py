@@ -1,28 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.core.cache import cache
 from django.db.models import Count, F, Q
 from django.http import HttpResponse
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from .forms import CommentCreateForm
 from .models import Post, Category, Tag, Comment
-
-
-def _sidebar_context(*, exclude_post_id=None):
-    categories = Category.objects.annotate(
-        post_count=Count("posts", filter=Q(posts__is_published=True))
-    )
-    tags = Tag.objects.all()
-    recent_posts_qs = Post.objects.filter(is_published=True)
-    if exclude_post_id is not None:
-        recent_posts_qs = recent_posts_qs.exclude(pk=exclude_post_id)
-    recent_posts = recent_posts_qs[:5]
-
-    return {
-        "categories": categories,
-        "tags": tags,
-        "recent_posts": recent_posts,
-    }
+from .sidebar import get_sidebar_context
 
 
 def post_list(request):
@@ -41,7 +27,7 @@ def post_list(request):
     page_number = request.GET.get('page', 1)
     posts = paginator.get_page(page_number)
 
-    context = {"posts": posts, "q": q, **_sidebar_context()}
+    context = {"posts": posts, "q": q}
     return render(request, 'blog/post_list.html', context)
 
 
@@ -58,10 +44,13 @@ def post_detail(request, slug):
     Post.objects.filter(pk=post.pk).update(views=F("views") + 1)
     post.refresh_from_db(fields=["views"])
     
-    # 获取已审核的评论
-    comments = post.get_comments()
+    comments = post.get_comments().prefetch_related("replies")
 
-    context = {"post": post, "comments": comments, **_sidebar_context(exclude_post_id=post.pk)}
+    context = {
+        "post": post,
+        "comments": comments,
+        **get_sidebar_context(exclude_post_id=post.pk),
+    }
     return render(request, 'blog/post_detail.html', context)
 
 
@@ -82,7 +71,7 @@ def category_posts(request, slug):
     page_number = request.GET.get('page', 1)
     posts = paginator.get_page(page_number)
 
-    context = {"category": category, "posts": posts, **_sidebar_context()}
+    context = {"category": category, "posts": posts}
     return render(request, 'blog/category_posts.html', context)
 
 
@@ -103,7 +92,7 @@ def tag_posts(request, slug):
     page_number = request.GET.get('page', 1)
     posts = paginator.get_page(page_number)
 
-    context = {"tag": tag, "posts": posts, **_sidebar_context()}
+    context = {"tag": tag, "posts": posts}
     return render(request, 'blog/tag_posts.html', context)
 
 
@@ -115,24 +104,14 @@ def add_comment(request, post_id):
     post = get_object_or_404(Post, pk=post_id, is_published=True)
     
     if request.method == 'POST':
-        author_name = request.POST.get('author_name', '').strip()
-        author_email = request.POST.get('author_email', '').strip()
-        content = request.POST.get('content', '').strip()
-        
-        email_ok = True
-        if author_email:
-            try:
-                validate_email(author_email)
-            except ValidationError:
-                email_ok = False
-
-        if author_name and email_ok and content and len(content) <= 2000:
+        form = CommentCreateForm(request.POST)
+        if form.is_valid():
             Comment.objects.create(
                 post=post,
-                author_name=author_name,
-                author_email=author_email,
-                content=content,
-                is_approved=False  # 需要审核
+                author_name=form.cleaned_data["author_name"].strip(),
+                author_email=form.cleaned_data["author_email"],
+                content=form.cleaned_data["content"],
+                is_approved=False,
             )
             messages.success(request, '评论已提交，等待审核后显示。')
         else:
@@ -140,6 +119,58 @@ def add_comment(request, post_id):
     
     return redirect('blog:post_detail', slug=post.slug)
 
+def _client_ip(request):
+    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "")
+
+
+def add_comment_ajax(request, post_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "invalid_method"}, status=405)
+    post = get_object_or_404(Post, pk=post_id, is_published=True)
+    ip = _client_ip(request)
+    rate_key = f"comment_rate:{post.pk}:{ip}"
+    if ip and cache.get(rate_key):
+        return JsonResponse({"ok": False, "error": "rate_limited"}, status=429)
+
+    form = CommentCreateForm(request.POST)
+    if not form.is_valid():
+        errors = {k: [str(e) for e in v] for k, v in form.errors.items()}
+        return JsonResponse({"ok": False, "error": "invalid_input", "errors": errors}, status=400)
+
+    parent = None
+    parent_id = form.cleaned_data.get("parent_id")
+    if parent_id:
+        try:
+            parent = Comment.objects.get(pk=parent_id, post=post, is_approved=True, parent__isnull=True)
+        except Comment.DoesNotExist:
+            parent = None
+    comment = Comment.objects.create(
+        post=post,
+        author_name=form.cleaned_data["author_name"].strip(),
+        author_email=form.cleaned_data["author_email"],
+        content=form.cleaned_data["content"],
+        parent=parent,
+        is_approved=False,
+    )
+    if ip:
+        cache.set(rate_key, "1", timeout=10)
+    html = render_to_string(
+        "blog/_comment.html",
+        {"comment": comment, "pending": True},
+        request=request,
+    )
+    return JsonResponse(
+        {
+            "ok": True,
+            "pending": True,
+            "html": html,
+            "parent_id": parent.pk if parent else None,
+            "comment_id": comment.pk,
+        }
+    )
 
 def about(request):
     """
@@ -153,7 +184,7 @@ def about(request):
         'comment_count': Comment.objects.filter(is_approved=True).count(),
     }
     
-    context = {"stats": stats, **_sidebar_context()}
+    context = {"stats": stats}
     return render(request, 'blog/about.html', context)
 
 
@@ -183,7 +214,6 @@ def search(request):
         'posts': posts,
         'query': query,
         'result_count': posts_queryset.count(),
-        **_sidebar_context()
     }
     return render(request, 'blog/search.html', context)
 
@@ -206,7 +236,6 @@ def archives(request):
     
     context = {
         'archive_dates': archive_dates,
-        **_sidebar_context()
     }
     return render(request, 'blog/archives.html', context)
 
@@ -235,7 +264,6 @@ def archive_month(request, year, month):
         'posts': posts,
         'year': year,
         'month': month,
-        **_sidebar_context()
     }
     return render(request, 'blog/archive_month.html', context)
 
@@ -244,20 +272,14 @@ def robots_txt(request):
     lines = [
         "User-agent: *",
         "Disallow:",
+        "Sitemap: /sitemap.xml",
     ]
     return HttpResponse("\n".join(lines) + "\n", content_type="text/plain; charset=utf-8")
 
 
 def page_not_found(request, exception):
-    context = {"q": request.GET.get("q", "").strip(), **_sidebar_context()}
-    return render(request, "404.html", context, status=404)
+    return render(request, "404.html", status=404)
 
 
 def server_error(request):
-    context = {
-        "categories": [],
-        "tags": [],
-        "recent_posts": [],
-        "q": "",
-    }
-    return render(request, "500.html", context, status=500)
+    return render(request, "500.html", status=500)

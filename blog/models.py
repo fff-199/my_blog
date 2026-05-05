@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.urls import reverse
 import uuid
 
 
@@ -27,6 +28,9 @@ class Category(models.Model):
             self.slug = slugify(self.name, allow_unicode=True) or str(uuid.uuid4())[:8]
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        return reverse("blog:category_posts", args=[self.slug])
+
 
 class Tag(models.Model):
     """
@@ -48,6 +52,9 @@ class Tag(models.Model):
         if not self.slug:
             self.slug = slugify(self.name, allow_unicode=True) or str(uuid.uuid4())[:8]
         super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("blog:tag_posts", args=[self.slug])
 
 
 class Post(models.Model):
@@ -113,8 +120,10 @@ class Post(models.Model):
         super().save(*args, **kwargs)
 
     def get_comments(self):
-        """获取已审核的评论"""
-        return self.comments.filter(is_approved=True).order_by('-created_at')
+        return self.comments.filter(is_approved=True, parent__isnull=True).order_by('-created_at')
+
+    def get_absolute_url(self):
+        return reverse("blog:post_detail", args=[self.slug])
 
 
 class Comment(models.Model):
@@ -131,6 +140,14 @@ class Comment(models.Model):
     author_name = models.CharField(max_length=100, verbose_name="评论者名称")
     author_email = models.EmailField(verbose_name="评论者邮箱")
     content = models.TextField(verbose_name="评论内容")
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        related_name="replies",
+        null=True,
+        blank=True,
+        verbose_name="父评论",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="评论时间")
     is_approved = models.BooleanField(default=False, verbose_name="是否审核通过")
 

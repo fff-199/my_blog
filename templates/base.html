@@ -8,48 +8,42 @@
     <title>{% block title %}我的博客{% endblock %}</title>
     <meta name="description" content="{% block description %}一个记录生活与技术的个人博客{% endblock %}">
 
-    <!-- Google Fonts -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
-    <!-- 自定义样式 -->
+    <!-- Styles -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-    <!-- 导航栏 -->
-    <nav class="navbar">
-        <div class="container">
-            <a href="{% url 'blog:post_list' %}" class="logo">
-                <span class="logo-icon">🌿</span>
-                我的博客
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-inner">
+            <a href="{% url 'blog:post_list' %}" class="nav-brand">
+                <span class="nav-logo">✦</span>
+                <span class="nav-title">我的博客</span>
             </a>
-            <ul class="nav-links">
-                <li><a href="{% url 'blog:post_list' %}"
-                        class="nav-link {% if request.resolver_match.url_name == 'post_list' and not category and not tag %}active{% endif %}">首页</a>
-                </li>
+            <div class="nav-links" id="navLinks">
+                <a href="{% url 'blog:post_list' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'post_list' and not category and not tag %}active{% endif %}">首页</a>
                 {% for cat in categories|slice:":4" %}
-                <li><a href="{% url 'blog:category_posts' cat.slug %}"
-                        class="nav-link {% if category.slug == cat.slug %}active{% endif %}">{{ cat.name }}</a></li>
+                <a href="{% url 'blog:category_posts' cat.slug %}"
+                    class="nav-link {% if category.slug == cat.slug %}active{% endif %}">{{ cat.name }}</a>
                 {% endfor %}
-                <li><a href="{% url 'blog:about' %}"
-                        class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">关于</a>
-                </li>
-                <li><a href="/admin/" class="nav-link nav-admin">管理</a></li>
-            </ul>
-            <button class="mobile-menu-btn" aria-label="打开菜单" aria-controls="mobileMenu" aria-expanded="false"
-                onclick="toggleMobileMenu()">
-                <span></span>
-                <span></span>
-                <span></span>
+                <a href="{% url 'blog:about' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">关于</a>
+            </div>
+            <button class="nav-toggle" aria-label="菜单" onclick="toggleMenu()">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4.5h12M3 9h12M3 13.5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </button>
         </div>
     </nav>
 
-    <!-- 移动端菜单 -->
+    <!-- Mobile menu -->
     <div class="mobile-menu" id="mobileMenu">
         <a href="{% url 'blog:post_list' %}">首页</a>
         {% for cat in categories %}
@@ -59,59 +53,71 @@
         <a href="/admin/">管理</a>
     </div>
 
-    <!-- 消息提示 -->
+    <!-- Toast messages -->
     {% if messages %}
-    <div class="messages-container">
+    <div class="toast-container">
         {% for message in messages %}
-        <div class="message message-{{ message.tags }}">
-            {{ message }}
-            <button class="message-close" onclick="this.parentElement.remove()">×</button>
+        <div class="toast toast-{{ message.tags }}">
+            <span>{{ message }}</span>
+            <button class="toast-close" onclick="this.parentElement.remove()">×</button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- 主内容区 -->
+    <!-- Main content -->
     <main class="main-content">
-        <div class="container">
-            {% block content %}{% endblock %}
-        </div>
+        {% block content %}{% endblock %}
     </main>
 
-    <!-- 页脚 -->
+    <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
+        <div class="footer-inner">
+            <div class="footer-main">
                 <div class="footer-brand">
-                    <span class="footer-logo">🌿 我的博客</span>
-                    <p class="footer-desc">用心记录，分享美好</p>
+                    <span class="footer-logo">✦ 我的博客</span>
+                    <p class="footer-tagline">用心记录，分享美好</p>
                 </div>
-                <div class="footer-links">
+                <div class="footer-col">
+                    <h4 class="footer-heading">导航</h4>
                     <a href="{% url 'blog:post_list' %}">首页</a>
                     <a href="{% url 'blog:about' %}">关于</a>
-                    <a href="/admin/">管理</a>
+                    <a href="{% url 'blog:archives' %}">归档</a>
                 </div>
-                <div class="footer-contact">
-                    <a href="mailto:a15626213440@gmail.com">📧 a15626213440@gmail.com</a>
-                    <a href="https://github.com/fff-199" target="_blank">🐙 GitHub</a>
+                <div class="footer-col">
+                    <h4 class="footer-heading">联系</h4>
+                    <a href="mailto:a15626213440@gmail.com">Email</a>
+                    <a href="https://github.com/fff-199" target="_blank" rel="noopener">GitHub</a>
+                    <a href="/admin/">管理后台</a>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 我的博客 · 用 ❤️ 和 Django 构建</p>
+                <p>&copy; 2026 我的博客 &middot; 用 Django 构建</p>
             </div>
         </div>
     </footer>
 
     <script>
-        function toggleMobileMenu() {
+        function toggleMenu() {
             const menu = document.getElementById('mobileMenu');
-            const btn = document.querySelector('.mobile-menu-btn');
-            menu.classList.toggle('active');
-            if (btn) {
-                const expanded = menu.classList.contains('active');
-                btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-            }
+            menu.classList.toggle('open');
         }
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('mobileMenu');
+            const toggle = document.querySelector('.nav-toggle');
+            if (menu.classList.contains('open') && !menu.contains(e.target) && !toggle.contains(e.target)) {
+                menu.classList.remove('open');
+            }
+        });
+        // Navbar scroll shadow
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 10) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
     </script>
     {% block extra_js %}{% endblock %}
 </body>

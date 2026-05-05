@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'blog',
+    "django.contrib.sitemaps",
+    "blog",
 ]
 
 MIDDLEWARE = [
@@ -67,6 +68,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "blog.context_processors.sidebar_context",
             ],
         },
     },
@@ -130,3 +132,5 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # 默认主键类型
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+TEST_RUNNER = "config.test_runner.ExplicitModuleTestRunner"
